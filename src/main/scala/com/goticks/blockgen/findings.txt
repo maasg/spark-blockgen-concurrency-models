@@ -1,0 +1,31 @@
+Test Scenario:
+BlockGenerator: Synchronized
+1 data generator: TimeBoxedSeqDataGen(blockGen,10000000))
+produced: Totals: records=430000000, time=31247, rec/ms=13761.32
+received: 429999961  // note this Data Generator creates data blocks of the given size, so a sum of blocks should be a multiple of 10000000
+diff: 39
+
+Test Scenario:
+BlockGenerator: Synchronized
+5 data generator: TimeBoxedSeqDataGen(blockGen,10000000))
+produced: Totals: records=430000000, time=31247, rec/ms=13761.32
+received: 429999961  // note this Data Generator creates data blocks of the given size, so a sum of blocks should be a multiple of 10000000
+produced:  Totals: records=920000000, time=421744, rec/ms=2181.42
+received: 919999201
+diff: 799
+
+Test Scenario:
+BlockGenerator: Original (not-synchronized)
+5 data generator: TimeBoxedSeqDataGen(blockGen,10000000))
+produced: Totals: records=1180000000, time=67062, rec/ms=17595.66
+received: 429999961  // note this Data Generator creates data blocks of the given size, so a sum of blocks should be a multiple of 10000000
+produced:  Totals: records=1180000000, time=67062, rec/ms=17595.66
+received:  1181328348
+diff: -1328348
+
+BlockGenerator: Synchronized =
+def += (obj: T) {
+    currentBuffer.synchronized{
+      currentBuffer += obj
+    }
+}

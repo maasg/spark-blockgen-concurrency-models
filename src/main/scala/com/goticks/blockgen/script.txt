@@ -1,0 +1,19 @@
+import com.goticks.blockgen._
+import com.goticks.blockrec._
+val blockCounter = new BlockCounter[Int]
+val blockGen = new BlockGenerator[Int](blockCounter)
+blockGen.start
+ // val gentors = (1 to 1).toList.map(x=>new TimedDataGen(blockGen,1000)) // timebox = 1s
+ val gentors = (1 to 5).toList.map(x=>new TimeBoxedSeqDataGen(blockGen,10000000)) // record limit
+ val mon = new SimpleDataMonitor("console")
+  gentors.foreach(_.addMonitor(mon))
+  def total = gentors.map(_.totalRecords).sum
+  def start = gentors.foreach(_.start)
+  def stop = gentors.foreach(_.stop)
+  def diff = mon.totalRecords - blockCounter.totalRecords
+
+
+
+
+
+
