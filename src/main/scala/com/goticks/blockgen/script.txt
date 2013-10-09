@@ -1,19 +1,70 @@
 import com.goticks.blockgen._
 import com.goticks.blockrec._
+import spark.streaming.dstream.BlockGenerator
 val blockCounter = new BlockCounter[Int]
 val blockGen = new BlockGenerator[Int](blockCounter)
-blockGen.start
+
  // val gentors = (1 to 1).toList.map(x=>new TimedDataGen(blockGen,1000)) // timebox = 1s
  val gentors = (1 to 5).toList.map(x=>new TimeBoxedSeqDataGen(blockGen,10000000)) // record limit
  val mon = new SimpleDataMonitor("console")
   gentors.foreach(_.addMonitor(mon))
   def total = gentors.map(_.totalRecords).sum
-  def start = gentors.foreach(_.start)
-  def stop = gentors.foreach(_.stop)
+  def start = {
+    blockGen.start
+    gentors.foreach(_.start)
+  }
+  def stop = {
+    gentors.foreach(_.stop)
+  }
   def diff = mon.totalRecords - blockCounter.totalRecords
 
 
+def xorZip[T](l1:List[T], l2:List[T]):List[List[T]] = {
+    def maskedUnzip[T](l:List[((T,T),Int)], mask:Int=>Boolean):List[T] = l.map{ case ((x,y),index) => if (mask(index)) x else y}
+    val l1zl2 = l1.zip(l2).zipWithIndex
+
+    val mask = (0 until l1zl2.size).toSet.subsets.toList
+    mask.map(mask => maskedUnzip(l1zl2, mask.contains(_)))
+}
+
+def bitXorZip[T](l1:List[T], l2:List[T]):List[List[T]] = {
+    import scala.collection.immutable.BitSet
+    def maskedUnzip[T](l:List[((T,T),Int)], mask:Int=>Boolean):List[T] = l.map{ case ((x,y),index) => if (mask(index)) x else y}
+    val l1zl2 = l1.zip(l2).zipWithIndex
+    val masks = (BitSet() ++  (0 until l1zl2.size)).subsets
+    masks.map(mask => maskedUnzip(l1zl2, mask.contains(_))).toList
+}
 
 
 
+def permut[A](l: List[(A,A)]): List[List[A]] = l match {
+  case Nil => List(List())   // or Nil :: Nil
+  case (a,b) :: tail =>
+    val t = permut(tail)
+    t.map(a :: _) ::: t.map(b :: _)
+}
+
+def permutations[T](l1:List[T], l2:List[T]) = permut( l1 zip l2)
+
+def time[T](b: => T):(T, Long) = {
+    val t0 = System.currentTimeMillis()
+    val res = b
+    val t = System.currentTimeMillis() - t0
+    (res,t )
+  }
+
+ def linearListTest(op: => (List[Int],List[Int])=> Unit) = (1 to 32).map(x=> 0 until x).foreach( seq => {
+      println("processing list of size: %d".format(seq.size))
+      val l = seq.toList
+      val (res,timed) = time(op(l,l))
+      println("processing took %d ms".format(timed))
+      })
+
+scala> linearListTest(permutations(_,_))
+processing list of size: 10
+processing took 1 ms
+processing list of size: 20
+processing took 282 ms
+processing list of size: 30
+java.lang.OutOfMemoryError: Java heap space
 

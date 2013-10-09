@@ -8,15 +8,16 @@ import ExecutionContext.Implicits.global
 
 
 abstract class DataGen(rcv:DataReceiver[Int]) extends Monitorable {
-  val active = {val v = new SyncVar[Boolean]; v.put(false); v}
+  var active:Boolean = false
   var monitors:List[DataMonitor] = Nil
   var total:Long = 0
 
   def start():Unit = {
-    total = 0
-    active.take()
-    active.put(true)
-    val res = future{gen()}
+      println("DataGen starting...")
+      total = 0
+      active = true
+      val res = future{gen()}
+    println("DataGen started...")
   }
 
   def addMonitor(mon:DataMonitor) : Unit = monitors = mon::monitors
@@ -27,14 +28,13 @@ abstract class DataGen(rcv:DataReceiver[Int]) extends Monitorable {
     val (records,timed) = time {generate(rcv)}
     total += records
     report(records, (timed/1e6).toLong)
-    if (active.get) gen()
+    if (active) gen()
   }
 
   def totalRecords = total
 
   def stop():Unit = {
-    active.take()
-    active.put(false)
+     active = false
   }
 
   def time[T](b: => T):(T, Long) = {

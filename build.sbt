@@ -15,7 +15,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
                   "Spray Nightlies"     at "http://nightlies.spray.io/")
 
 libraryDependencies ++= {
-  val akkaVersion       = "2.1.2"
+  val akkaVersion       = "2.2.1"
   val sprayVersion      = "1.1-20130123"
   Seq(
     "com.typesafe.akka" %% "akka-actor"      % akkaVersion,
