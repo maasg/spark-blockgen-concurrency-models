@@ -14,18 +14,27 @@ class BlockReceiverActor extends Actor with ActorLogging {
 
     var totalBlocks = 0
     var totalRecords = 0
+    var currentCount = 0
     val blockRecord = new ArrayBuffer[Int]()
+    def now() = System.currentTimeMillis()
+    var last = now()
 
   def receive = {
     case Block(id,data) => {
+
       totalBlocks += 1
       val len = data.length
       totalRecords += len
       blockRecord += len
     }
-    case Max(_) => sender ! Max(max)
+    case Max(_) => println("Max throughput:" + max)
     case Min(_) => sender ! Min(min)
-    case Total(_) => sender ! Total(totalRecords)
+    case Total(_) => {
+      val recs = totalRecords-currentCount
+      println("records:" + recs + " records/ms:" + (recs*1.0/(now()-last)))
+      last= now()
+      currentCount = totalRecords
+    }
     case _ => println(" Are you nuts?")
   }
 
